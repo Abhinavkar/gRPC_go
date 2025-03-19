@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package employee;
+
+option go_package = "./protos/employee";
+
+message Employee {
+    int32 id = 1;
+    string name = 2;
+    string role = 3;
+    string department = 4;
+}
+
+message EmployeeRequest {
+    int32 id =1;
+}
+
+message StringResponse {
+    string response = 1;
+}
+
+service EmployeeService {
+    rpc CreateEmployee(Employee) returns (Employee);
+    rpc GetEmployee(EmployeeRequest) returns (Employee);
+    rpc UpdateEmployee(Employee) returns (Employee);
+    rpc DeleteEmployee(EmployeeRequest) returns (StringResponse);
+}
