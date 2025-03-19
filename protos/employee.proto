@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package employee;
 
-option go_package = "./protos/employee";
+option go_package = "/protos/employee";
 
 message Employee {
     int32 id = 1;
