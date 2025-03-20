@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	dbConnectionStr = "user=postgres password=postgres@123 db_name=go_employee_db sslmode=disable"
+	dbConnectionStr = "user=postgres password=123123 db_name=go_employee_db sslmode=disable"
 )
 
 type server struct {
@@ -27,14 +27,22 @@ func main() {
 	if err != nil {
 		fmt.Println("An Error occured while connecting to Db:", err)
 	}
+	if err = db.Ping(); err != nil {
+		fmt.Println("Failed to connect to DB:", err)
+	}
+
+	elif err == nil {
+		fmt.Println("Connected to DB")
+	}
+
 	defer db.Close()
 
 	// starting connection to port or listening to port
 	listen, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		fmt.Println("Failed to Listen on Port:",err)
+		fmt.Println("Failed to Listen on Port:", err)
 	}
-	
+
 	// grpc server
 	s := grpc.NewServer()
 	pb.RegisterEmployeeServiceServer(s, &server{db: db})
@@ -50,13 +58,13 @@ func (s *server) CreateEmployee(c context.Context, request *pb.Employee) (*pb.Em
 	if err != nil {
 		return nil, err
 	}
-	return request,nil
+	return request, nil
 }
 
 func (s *server) GetEmployee(c context.Context, request *pb.EmployeeRequest) (*pb.Employee, error) {
 	emp := &pb.Employee{}
 	query := `SELECT id, name, role, department FROM employees WHERE id=$1`
-	err := s.db.QueryRow(query,request.Id).Scan(emp.Id, emp.Name, emp.Role, emp.Department)
+	err := s.db.QueryRow(query, request.Id).Scan(emp.Id, emp.Name, emp.Role, emp.Department)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +83,7 @@ func (s *server) UpdateEmployee(c context.Context, request *pb.Employee) (*pb.Em
 
 func (s *server) DeleteEmployee(c context.Context, request *pb.EmployeeRequest) (*pb.StringResponse, error) {
 	query := `DELETE FROM employees WHERE id=$1`
-	_, err := s.db.Exec(query,request.Id)
+	_, err := s.db.Exec(query, request.Id)
 	if err != nil {
 		return nil, err
 	}
