@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	dbConnectionStr = "user=postgres password=123123 db_name=go_employee_db sslmode=disable"
+	dbConnectionStr = "user=postgres password=123123 dbname=go_employee_db sslmode=disable"
 )
 
 type server struct {
@@ -22,33 +22,32 @@ type server struct {
 }
 
 func main() {
-	// connection to DB
+
 	db, err := sql.Open("postgres", dbConnectionStr)
 	if err != nil {
-		fmt.Println("An Error occured while connecting to Db:", err)
+		fmt.Println("An error occurred while connecting to the database:", err)
+		return
 	}
-	if err = db.Ping(); err != nil {
-		fmt.Println("Failed to connect to DB:", err)
-	}
-
-	elif err == nil {
-		fmt.Println("Connected to DB")
-	}
-
 	defer db.Close()
+	err = db.Ping()
+	if err != nil {
+		fmt.Println("An error occurred while pinging the database:", err)
+		return
+	}
+	fmt.Println("Connected to DB")
 
-	// starting connection to port or listening to port
+	// Start listening on port
 	listen, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		fmt.Println("Failed to Listen on Port:", err)
+		fmt.Println("Failed to listen on port:", err)
+		return
 	}
 
-	// grpc server
 	s := grpc.NewServer()
 	pb.RegisterEmployeeServiceServer(s, &server{db: db})
 	fmt.Println("Server is running on port 50051")
 	if err := s.Serve(listen); err != nil {
-		fmt.Println("Error", err)
+		fmt.Println("Error occurred while serving:", err)
 	}
 }
 
@@ -64,17 +63,16 @@ func (s *server) CreateEmployee(c context.Context, request *pb.Employee) (*pb.Em
 func (s *server) GetEmployee(c context.Context, request *pb.EmployeeRequest) (*pb.Employee, error) {
 	emp := &pb.Employee{}
 	query := `SELECT id, name, role, department FROM employees WHERE id=$1`
-	err := s.db.QueryRow(query, request.Id).Scan(emp.Id, emp.Name, emp.Role, emp.Department)
+	err := s.db.QueryRow(query, request.Id).Scan(&emp.Id, &emp.Name, &emp.Role, &emp.Department)
 	if err != nil {
 		return nil, err
 	}
 	return emp, nil
 }
-
 func (s *server) UpdateEmployee(c context.Context, request *pb.Employee) (*pb.Employee, error) {
 	emp := &pb.Employee{}
 	query := `UPDATE employees SET name=$1, role=$2, department=$3 WHERE id=$4 RETURNING id, name, role, department`
-	err := s.db.QueryRow(query, request.Name, request.Role, request.Department, request.Id).Scan(emp.Id, emp.Name, emp.Role, emp.Department)
+	err := s.db.QueryRow(query, request.Name, request.Role, request.Department, request.Id).Scan(&emp.Id, &emp.Name, &emp.Role, &emp.Department)
 	if err != nil {
 		return nil, err
 	}
